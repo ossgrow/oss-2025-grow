@@ -8,13 +8,13 @@ pipeline {
     // environment 블록: 파이프라인 전체에서 사용할 환경변수 정의
     // 지금은 사용하지 않지만 DB 관련 env 변수를 Jenkins Credential로
     // 불러올 때 사용 가능 (필요할 때만 활성화하면 됨)
-    environment {
+    /*environment {
         // DB_HOST = credentials('db_host')   // Jenkins Credential에서 불러오기
         // DB_USER = credentials('db_user')
         // DB_PASSWORD = credentials('db_password')
         // DB_DATABASE = credentials('db_database')
         // DB_PORT = credentials('db_port')
-    }
+    }*/
 
     // 전체 빌드 과정을 단계별로 구분하는 영역
     stages {
