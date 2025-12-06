@@ -9,6 +9,13 @@ spec:
   selector:
     matchLabels:
       app: grow-app
+  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
   template:
     metadata:
       labels:
@@ -52,6 +59,12 @@ spec:
                 secretKeyRef:
                   name: grow-db-secret
                   key: DB_PORT
+
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: grow-db-secret
+                  key: SESSION_SECRET
 
       imagePullSecrets:
         - name: dockerhub-secrets   # DockerHub private이면 필요 / public이면 삭제해도 됨
