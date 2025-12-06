@@ -1,6 +1,5 @@
 // Declarative Pipeline 시작
 pipeline {
-
     agent any
 
     stages {
@@ -44,19 +43,22 @@ pipeline {
             }
         }
 
-        // 5) GCP 인증 + kubeconfig 설정
+        // 5) GCP 인증 + kubeconfig 설정 (권한 문제 해결)
         stage('GCP Auth & Kubeconfig') {
             steps {
                 script {
+                    // gcp-sa-key: Jenkins Credential ID
                     withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        // $WORKSPACE/.kube/config 경로 사용
                         sh '''
-                            # 서비스 계정 인증
+                            export KUBECONFIG=$WORKSPACE/.kube/config
+                            mkdir -p $(dirname $KUBECONFIG)
+
+                            # GCP 서비스 계정 인증
                             gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
 
                             # kubeconfig 갱신 (클러스터 접속)
-                            gcloud container clusters get-credentials k8s \
-                                --zone asia-northeast3-a \
-                                --project oss-grow
+                            gcloud container clusters get-credentials k8s --zone asia-northeast3-a --project oss-grow
                         '''
                     }
                 }
@@ -74,7 +76,7 @@ pipeline {
                             passwordVariable: 'DH_TOKEN'
                         )
                     ]) {
-                        withEnv(["KUBECONFIG=/var/jenkins_home/.kube/config"]) {
+                        withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
                             sh """
                                 kubectl create secret docker-registry dockerhub-secrets \
                                   --docker-username=$DH_USER \
