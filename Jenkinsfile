@@ -48,7 +48,7 @@ pipeline {
         stage('GCP Auth & Kubeconfig') {
             steps {
                 script {
-                    withCredentials([file(credentialsId: 'jenkins-gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
                         sh '''
                             # 서비스 계정 인증
                             gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
