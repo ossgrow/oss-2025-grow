@@ -88,7 +88,7 @@ pipeline {
                             passwordVariable: 'DH_TOKEN'     // DockerHub Token
                         )
                     ]) {
-
+                        withEnv(["KUBECONFIG=/var/jenkins_home/.kube/config"]) {
                         // kubectl 명령으로 K8s secret 생성
                         // dry-run=client: 실제 파일 생성 없이 yaml 출력
                         // 그 출력 결과를 그대로 kubectl apply로 적용
@@ -103,7 +103,8 @@ pipeline {
                 }
             }
         }
+      }
 
     } // stages 끝
 
-} // pipeline 끝
+ }// pipeline 끝
