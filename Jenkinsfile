@@ -26,7 +26,7 @@ pipeline {
         stage('Build Docker image') {
             steps {
                 script {
-                    app = docker.build("yun1code/grow:${env.BUILD_NUMBER}")
+                    app = docker.build("yun1code/grow-app:${env.BUILD_NUMBER}")
                 }
             }
         }
@@ -89,6 +89,19 @@ pipeline {
                 }
             }
         }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
+                        sh """
+                            kubectl apply -n grow-dev -f k8s/deployment.yaml
+                            kubectl apply -n grow-dev -f k8s/service.yaml
+                        """
+                    }
+                }
+            }
+        }
+
 
     } // stages 끝
 } // pipeline 끝
