@@ -112,6 +112,15 @@ pipeline {
                 }
             }
         }
+        stage('Restart Deployment') {
+            steps {
+                script {
+                    withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
+                        sh "kubectl rollout restart deployment/grow-app -n grow-dev"
+                    }
+                }
+            }
+        }
 
     } // stages 끝
 } // pipeline 끝
