@@ -1,6 +1,11 @@
-// Declarative Pipeline 시작
 pipeline {
     agent any
+
+    environment {
+        IMAGE_NAME = "yun1code/grow-app"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"   // 매 빌드마다 고유 태그 생성
+        K8S_NAMESPACE = "default"
+    }
 
     stages {
 
@@ -26,7 +31,7 @@ pipeline {
         stage('Build Docker image') {
             steps {
                 script {
-                    app = docker.build("yun1code/grow-app:${env.BUILD_NUMBER}")
+                    app = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
@@ -36,28 +41,23 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'yun1code') {
-                        app.push()
-                        app.push("latest")
+                        app.push()               // ex) grow-app:22
+                        app.push("latest")       // latest 유지
                     }
                 }
             }
         }
 
-        // 5) GCP 인증 + kubeconfig 설정 (권한 문제 해결)
+        // 5) GCP Auth & Kubeconfig
         stage('GCP Auth & Kubeconfig') {
             steps {
                 script {
-                    // gcp-sa-key: Jenkins Credential ID
                     withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                        // $WORKSPACE/.kube/config 경로 사용
                         sh '''
                             export KUBECONFIG=$WORKSPACE/.kube/config
                             mkdir -p $(dirname $KUBECONFIG)
 
-                            # GCP 서비스 계정 인증
                             gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
-
-                            # kubeconfig 갱신 (클러스터 접속)
                             gcloud container clusters get-credentials k8s --zone asia-northeast3-a --project oss-grow
                         '''
                     }
@@ -65,8 +65,8 @@ pipeline {
             }
         }
 
-        // 6) Create DockerHub Pull Secret in Kubernetes
-        stage('Create DockerHub Pull Secret in Kubernetes') {
+        // 6) Create DockerHub Pull Secret
+        stage('Create DockerHub Pull Secret') {
             steps {
                 script {
                     withCredentials([
@@ -82,7 +82,7 @@ pipeline {
                                   --docker-username=$DH_USER \
                                   --docker-password=$DH_TOKEN \
                                   --docker-email=none \
-                                  -n grow-dev \
+                                  -n ${K8S_NAMESPACE} \
                                   --dry-run=client -o yaml | kubectl apply -f -
                             """
                         }
@@ -90,37 +90,32 @@ pipeline {
                 }
             }
         }
+
+        // 7) 🚀 Auto Rolling Update to Kubernetes
         stage('Deploy to Kubernetes') {
             steps {
                 script {
                     withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
                         sh """
-                            kubectl apply -n grow-dev -f k8s/secret.yaml
-                            kubectl apply -n grow-dev -f k8s/deployment.yaml
-                            kubectl apply -n grow-dev -f k8s/service.yaml
+                            kubectl set image deployment/grow-app \
+                              grow-app=${IMAGE_NAME}:${IMAGE_TAG} \
+                              -n ${K8S_NAMESPACE} \
+                              --record
                         """
                     }
                 }
             }
         }
+
+        // 8) Check rollout success
         stage('Check rollout status') {
             steps {
                 script {
                     withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
-                        sh "kubectl rollout status deployment/grow-app"
+                        sh "kubectl rollout status deployment/grow-app -n ${K8S_NAMESPACE}"
                     }
                 }
             }
         }
-        stage('Restart Deployment') {
-            steps {
-                script {
-                    withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
-                        sh "kubectl rollout restart deployment/grow-app"
-                    }
-                }
-            }
-        }
-
-    } // stages 끝
-} // pipeline 끝
+    }
+}
