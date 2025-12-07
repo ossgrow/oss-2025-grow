@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "yun1code/grow-app"
+        IMAGE_NAME = "yun1code/grow"
         IMAGE_TAG = "${env.BUILD_NUMBER}"   // 매 빌드마다 고유 태그 생성
         K8S_NAMESPACE = "default"
     }
