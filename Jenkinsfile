@@ -95,6 +95,7 @@ pipeline {
                 script {
                     withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
                         sh """
+                            kubectl apply -n grow-dev -f k8s/secret.yaml
                             kubectl apply -n grow-dev -f k8s/deployment.yaml
                             kubectl apply -n grow-dev -f k8s/service.yaml
                         """
