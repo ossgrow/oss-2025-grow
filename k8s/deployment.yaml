@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grow-app
-  namespace: grow-dev
   labels:
     app: grow-app
 spec:
