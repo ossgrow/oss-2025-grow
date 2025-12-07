@@ -82,6 +82,7 @@ pipeline {
                                   --docker-username=$DH_USER \
                                   --docker-password=$DH_TOKEN \
                                   --docker-email=none \
+                                  -n grow-dev \
                                   --dry-run=client -o yaml | kubectl apply -f -
                             """
                         }
@@ -101,7 +102,15 @@ pipeline {
                 }
             }
         }
-
+        stage('Check rollout status') {
+            steps {
+                script {
+                    withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
+                        sh "kubectl rollout status deployment/grow-app -n grow-dev"
+                    }
+                }
+            }
+        }
 
     } // stages 끝
 } // pipeline 끝
