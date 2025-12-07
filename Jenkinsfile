@@ -107,7 +107,7 @@ pipeline {
             steps {
                 script {
                     withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
-                        sh "kubectl rollout status deployment/grow-app -n grow-dev"
+                        sh "kubectl rollout status deployment/grow-app"
                     }
                 }
             }
@@ -116,7 +116,7 @@ pipeline {
             steps {
                 script {
                     withEnv(["KUBECONFIG=$WORKSPACE/.kube/config"]) {
-                        sh "kubectl rollout restart deployment/grow-app -n grow-dev"
+                        sh "kubectl rollout restart deployment/grow-app"
                     }
                 }
             }
