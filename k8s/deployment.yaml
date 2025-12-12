@@ -68,4 +68,3 @@ spec:
 
       imagePullSecrets:
         - name: dockerhub-secrets   # DockerHub private이면 필요 / public이면 삭제해도 됨
-
